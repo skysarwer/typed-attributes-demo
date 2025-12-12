@@ -25,8 +25,18 @@ import { useBlockProps } from '@wordpress/block-editor';
  *
  * @return {Element} Element to render.
  */
-export default function Edit( { attributes, setAttributes } ) {
+// Define the type for the block's attributes
+interface EditProps {
+	attributes: Record<string, unknown>;
+	setAttributes: (attributes: Partial<Record<string, unknown>>) => void;
+}
+
+const Edit: React.FC<EditProps> = ({ attributes, setAttributes }) => {
+	
 	const blockProps = useBlockProps();
+
+	console.log('Current Attributes:', attributes);
+	console.log('setAttributes Function:', setAttributes);
 
 	return (
 		<p { ...blockProps }>
@@ -36,4 +46,6 @@ export default function Edit( { attributes, setAttributes } ) {
 			) }
 		</p>
 	);
-}
+};
+
+export default Edit;

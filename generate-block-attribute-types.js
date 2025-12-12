@@ -1,67 +1,76 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const { compile } = require( 'json-schema-to-typescript' );
-const glob = require( 'glob' ); // Using glob for easy file searching
+const glob = require( 'glob' );
 
-async function generateBlockAttributeTypes() {
-	// Standard search pattern for 'block.json' files in both single-block
-	// (e.g., 'src/block.json') and multi-block plugins (e.g., 'src/blocks/my-block/block.json').
-	const searchPattern = 'src/**/block.json';
+/**
+ * Generates TypeScript interfaces for block attributes from all found block.json files.
+ * This utility supports both single-block and multi-block plugin structures.
+ *
+ * @param {object} [options={}] - Configuration options.
+ * @param {string} [options.cwd=process.cwd()] - The current working directory for file searches.
+ * @param {string} [options.searchPattern] - Glob pattern to find block.json files.
+ */
+async function generateBlockAttributeTypes( options = {} ) {
+	// Determine the current working directory from options or Node.js process.
+	const cwd = options.cwd || process.cwd();
+	// Determine the file search pattern from options or default to common WordPress block paths.
+	const searchPattern = options.searchPattern || 'src/**/block.json';
 
-	// Use glob to find all matching files synchronously
+	// The interface name for generated block attributes, kept consistent across all blocks.
+	const attributesInterfaceName = 'BlockAttributes';
+
+	// Use glob to find all matching 'block.json' files synchronously based on the defined pattern.
 	const blockJsonFiles = glob.sync( searchPattern, {
-		cwd: process.cwd(),
-		absolute: false,
+		cwd: cwd,
+		absolute: false, // Get paths relative to cwd first
 	} );
 
 	if ( blockJsonFiles.length === 0 ) {
 		console.warn(
-			`No 'block.json' files found matching pattern '${ searchPattern }' in '${ process.cwd() }'. Skipping block attribute type generation.`
+			`No 'block.json' files found matching pattern '${ searchPattern }' in '${ cwd }'. Skipping block attribute type generation.`
 		);
-		return; // Exit if no blocks are found
+		return; // Exit if no blocks are found.
 	}
 
 	console.log(
-		`Found ${ blockJsonFiles.length } 'block.json' files. Generating attribute types...`
+		`Found ${ blockJsonFiles.length } 'block.json' file(s). Generating attribute types...`
 	);
 
-	const attributesInterfaceName = 'BlockAttributes'; // Consistent interface name for all blocks
-
 	for ( const blockJsonRelativePath of blockJsonFiles ) {
-		const blockJsonFullPath = path.resolve(
-			process.cwd(),
-			blockJsonRelativePath
-		);
-		const blockDir = path.dirname( blockJsonFullPath ); // The directory containing the block.json
+		// Resolve absolute paths for reading block.json and writing the output .d.ts file.
+		const blockJsonFullPath = path.resolve( cwd, blockJsonRelativePath );
+		const blockDir = path.dirname( blockJsonFullPath );
 		const attributesOutputTsPath = path.join(
 			blockDir,
 			'block-attributes.d.ts'
 		);
 
 		try {
+			// Read and parse the block's metadata.
 			const blockJson = JSON.parse(
 				fs.readFileSync( blockJsonFullPath, 'utf8' )
 			);
-			const blockAttributes = blockJson.attributes || {};
+			const blockAttributes = blockJson.attributes || {}; // Get the attributes definition
 
-			// Construct the root JSON Schema for json-schema-to-typescript
+			// Construct a the root JSON Schema object for `json-schema-to-typescript`.
 			const rootAttributesSchema = {
 				title: attributesInterfaceName,
 				type: 'object',
 				properties: {},
-				required: [],
-				additionalProperties: false,
+				required: [], // This array will be populated based on attribute defaults/roles.
+				additionalProperties: false, // Crucial to prevent '[k: string]: unknown;' in the output interface.
 			};
 
+			// Iterate over each attribute defined in block.json.
 			for ( const key in blockAttributes ) {
 				if (
 					Object.prototype.hasOwnProperty.call( blockAttributes, key )
 				) {
 					const attr = blockAttributes[ key ];
 
-					// Map the block.json attribute definition to a JSON Schema property.
-					// This creates a deep copy to ensure JSTT gets a clean schema object.
-					// JSTT will interpret nested 'items', 'properties', 'enum', etc., if present.
+					// Deep copy the attribute definition for JSTT to ensure a clean schema property.
+					// This handles nested `items`, `properties`, `enum`, `query`, etc.
 					const schemaProperty = JSON.parse(
 						JSON.stringify( {
 							type: attr.type,
@@ -70,14 +79,15 @@ async function generateBlockAttributeTypes() {
 							...( attr.properties && {
 								properties: attr.properties,
 							} ),
-							...( attr.query && { query: attr.query } ), // Handles query if structured as schema
-							// You can add other direct schema mapping here if needed for JSTT
+							...( attr.query && { query: attr.query } ),
 						} )
 					);
 
 					rootAttributesSchema.properties[ key ] = schemaProperty;
 
-					// Mark property as required if it has a default value or is the 'content' role
+					// Determine if the attribute should be 'required' (non-optional) in the TypeScript interface.
+					// An attribute is considered required if it has an explicit default value
+					// or if its role is 'content' (implying expected presence for the block's core functionality).
 					if (
 						Object.prototype.hasOwnProperty.call(
 							attr,
@@ -90,39 +100,52 @@ async function generateBlockAttributeTypes() {
 				}
 			}
 
+			// Compile the constructed JSON Schema into a TypeScript interface string.
 			const compiledAttributes = await compile(
 				rootAttributesSchema,
 				attributesInterfaceName,
 				{
 					bannerComment:
 						'/* eslint-disable */\n/**\n * This file was automatically generated by json-schema-to-typescript.\n * DO NOT MODIFY IT BY HAND. Instead, modify your block.json and rerun the script.\n */',
-					// Prettier options, ensure they match to @wordpress/scripts config:
-                    style: {
+					// Configure formatting to match @wordpress/scripts' (Prettier) defaults for consistency.
+					style: {
 						tabWidth: 2,
 						useTabs: true,
 					},
-					// Add other JSTT options here for formatting, etc.
 				}
 			);
-			fs.writeFileSync(
-				attributesOutputTsPath,
-				compiledAttributes,
-				'utf8'
-			);
-			console.log(
-				`  Generated '${ path.relative(
-					process.cwd(),
-					attributesOutputTsPath
-				) }' for '${ path.relative(
-					process.cwd(),
-					blockJsonFullPath
-				) }'`
-			);
+
+			// Read existing content to avoid unnecessary file writes in watch mode.
+			const currentContent = fs.existsSync( attributesOutputTsPath )
+				? fs.readFileSync( attributesOutputTsPath, 'utf8' )
+				: '';
+
+			// Write the new content only if it's different from the existing file.
+			if ( currentContent !== compiledAttributes ) {
+				fs.writeFileSync(
+					attributesOutputTsPath,
+					compiledAttributes,
+					'utf8'
+				);
+				console.log(
+					`  Updated '${ path.relative(
+						cwd,
+						attributesOutputTsPath
+					) }' for '${ path.relative( cwd, blockJsonFullPath ) }'`
+				);
+			} else {
+				console.log(
+					`  No changes needed for '${ path.relative(
+						cwd,
+						attributesOutputTsPath
+					) }'`
+				);
+			}
 		} catch ( error ) {
-			// Log error but continue processing other blocks
+			// Log specific error for the failed block but continue processing others.
 			console.error(
 				`  Error processing '${ path.relative(
-					process.cwd(),
+					cwd,
 					blockJsonFullPath
 				) }':`,
 				error.message
@@ -132,11 +155,17 @@ async function generateBlockAttributeTypes() {
 	console.log( 'Block attribute type generation complete.' );
 }
 
-generateBlockAttributeTypes().catch( ( error ) => {
-	// Catch any unhandled errors outside the loop
-	console.error(
-		'Unhandled error during block attribute type generation:',
-		error
-	);
-	process.exit( 1 );
-} );
+// Export the function directly for programmatic use (e.g., by the Webpack plugin).
+module.exports = generateBlockAttributeTypes;
+
+// If the script is executed directly (e.g., via `npm run generate-types`),
+// invoke the function with default options and handle any unhandled errors.
+if ( require.main === module ) {
+	generateBlockAttributeTypes().catch( ( error ) => {
+		console.error(
+			'Unhandled error during block attribute type generation:',
+			error
+		);
+		process.exit( 1 );
+	} );
+}

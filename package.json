@@ -7,8 +7,6 @@
 	"main": "build/index.js",
 	"scripts": {
 		"generate-types": "node ./generate-block-attribute-types.js",
-		"prebuild": "npm run generate-types",
-		"prestart": "npm run generate-types",
 		"prelint:js": "npm run generate-types",
 		"preformat": "npm run generate-types",
 		"build": "wp-scripts build --experimental-modules",

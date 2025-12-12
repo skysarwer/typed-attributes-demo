@@ -55,10 +55,11 @@ async function generateBlockAttributeTypes() {
                     }));
 
                     rootAttributesSchema.properties[key] = schemaProperty;
-                    // All attributes defined in block.json are treated as "required"
-                    // for the TypeScript interface, as they will always be present
-                    // (either with a stored value or their default).
-                    rootAttributesSchema.required.push(key);
+
+                    // Mark property as required if it has a default value or is the 'content' role
+                    if (Object.prototype.hasOwnProperty.call(attr, 'default') || attr.role === 'content') {
+                        rootAttributesSchema.required.push(key);
+                    }
                 }
             }
 

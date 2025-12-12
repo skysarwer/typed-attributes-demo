@@ -1,89 +1,137 @@
-const fs = require('fs');
-const path = require('path');
-const { compile } = require('json-schema-to-typescript');
-const glob = require('glob'); // Using glob for easy file searching
+const fs = require( 'fs' );
+const path = require( 'path' );
+const { compile } = require( 'json-schema-to-typescript' );
+const glob = require( 'glob' ); // Using glob for easy file searching
 
 async function generateBlockAttributeTypes() {
-    // Standard search pattern for 'block.json' files in both single-block
-    // (e.g., 'src/block.json') and multi-block plugins (e.g., 'src/blocks/my-block/block.json').
-    const searchPattern = 'src/**/block.json';
-    
-    // Use glob to find all matching files synchronously
-    const blockJsonFiles = glob.sync(searchPattern, { cwd: process.cwd(), absolute: false });
+	// Standard search pattern for 'block.json' files in both single-block
+	// (e.g., 'src/block.json') and multi-block plugins (e.g., 'src/blocks/my-block/block.json').
+	const searchPattern = 'src/**/block.json';
 
-    if (blockJsonFiles.length === 0) {
-        console.warn(`No 'block.json' files found matching pattern '${searchPattern}' in '${process.cwd()}'. Skipping block attribute type generation.`);
-        return; // Exit if no blocks are found
-    }
+	// Use glob to find all matching files synchronously
+	const blockJsonFiles = glob.sync( searchPattern, {
+		cwd: process.cwd(),
+		absolute: false,
+	} );
 
-    console.log(`Found ${blockJsonFiles.length} 'block.json' files. Generating attribute types...`);
+	if ( blockJsonFiles.length === 0 ) {
+		console.warn(
+			`No 'block.json' files found matching pattern '${ searchPattern }' in '${ process.cwd() }'. Skipping block attribute type generation.`
+		);
+		return; // Exit if no blocks are found
+	}
 
-    const attributesInterfaceName = 'BlockAttributes'; // Consistent interface name for all blocks
+	console.log(
+		`Found ${ blockJsonFiles.length } 'block.json' files. Generating attribute types...`
+	);
 
-    for (const blockJsonRelativePath of blockJsonFiles) {
-        const blockJsonFullPath = path.resolve(process.cwd(), blockJsonRelativePath);
-        const blockDir = path.dirname(blockJsonFullPath); // The directory containing the block.json
-        const attributesOutputTsPath = path.join(blockDir, 'block-attributes.d.ts');
+	const attributesInterfaceName = 'BlockAttributes'; // Consistent interface name for all blocks
 
-        try {
-            const blockJson = JSON.parse(fs.readFileSync(blockJsonFullPath, 'utf8'));
-            const blockAttributes = blockJson.attributes || {};
+	for ( const blockJsonRelativePath of blockJsonFiles ) {
+		const blockJsonFullPath = path.resolve(
+			process.cwd(),
+			blockJsonRelativePath
+		);
+		const blockDir = path.dirname( blockJsonFullPath ); // The directory containing the block.json
+		const attributesOutputTsPath = path.join(
+			blockDir,
+			'block-attributes.d.ts'
+		);
 
-            // Construct the root JSON Schema for json-schema-to-typescript
-            const rootAttributesSchema = {
-                title: attributesInterfaceName,
-                type: 'object',
-                properties: {},
-                required: [],
-                additionalProperties: false,
-            };
+		try {
+			const blockJson = JSON.parse(
+				fs.readFileSync( blockJsonFullPath, 'utf8' )
+			);
+			const blockAttributes = blockJson.attributes || {};
 
-            for (const key in blockAttributes) {
-                if (Object.prototype.hasOwnProperty.call(blockAttributes, key)) {
-                    const attr = blockAttributes[key];
-                    
-                    // Map the block.json attribute definition to a JSON Schema property.
-                    // This creates a deep copy to ensure JSTT gets a clean schema object.
-                    // JSTT will interpret nested 'items', 'properties', 'enum', etc., if present.
-                    const schemaProperty = JSON.parse(JSON.stringify({
-                        type: attr.type,
-                        ...(attr.enum && { enum: attr.enum }),
-                        ...(attr.items && { items: attr.items }),
-                        ...(attr.properties && { properties: attr.properties }),
-                        ...(attr.query && { query: attr.query }), // Handles query if structured as schema
-                        // You can add other direct schema mapping here if needed for JSTT
-                    }));
+			// Construct the root JSON Schema for json-schema-to-typescript
+			const rootAttributesSchema = {
+				title: attributesInterfaceName,
+				type: 'object',
+				properties: {},
+				required: [],
+				additionalProperties: false,
+			};
 
-                    rootAttributesSchema.properties[key] = schemaProperty;
+			for ( const key in blockAttributes ) {
+				if (
+					Object.prototype.hasOwnProperty.call( blockAttributes, key )
+				) {
+					const attr = blockAttributes[ key ];
 
-                    // Mark property as required if it has a default value or is the 'content' role
-                    if (Object.prototype.hasOwnProperty.call(attr, 'default') || attr.role === 'content') {
-                        rootAttributesSchema.required.push(key);
-                    }
-                }
-            }
+					// Map the block.json attribute definition to a JSON Schema property.
+					// This creates a deep copy to ensure JSTT gets a clean schema object.
+					// JSTT will interpret nested 'items', 'properties', 'enum', etc., if present.
+					const schemaProperty = JSON.parse(
+						JSON.stringify( {
+							type: attr.type,
+							...( attr.enum && { enum: attr.enum } ),
+							...( attr.items && { items: attr.items } ),
+							...( attr.properties && {
+								properties: attr.properties,
+							} ),
+							...( attr.query && { query: attr.query } ), // Handles query if structured as schema
+							// You can add other direct schema mapping here if needed for JSTT
+						} )
+					);
 
-            const compiledAttributes = await compile(
-                rootAttributesSchema,
-                attributesInterfaceName,
-                {
-                    bannerComment: '/* eslint-disable */\n/**\n * This file was automatically generated by json-schema-to-typescript.\n * DO NOT MODIFY IT BY HAND. Instead, modify your block.json and rerun the script.\n */',
-                    // Add other JSTT options here for formatting, etc.
-                }
-            );
-            fs.writeFileSync(attributesOutputTsPath, compiledAttributes, 'utf8');
-            console.log(`  Generated '${path.relative(process.cwd(), attributesOutputTsPath)}' for '${path.relative(process.cwd(), blockJsonFullPath)}'`);
+					rootAttributesSchema.properties[ key ] = schemaProperty;
 
-        } catch (error) {
-            // Log error but continue processing other blocks
-            console.error(`  Error processing '${path.relative(process.cwd(), blockJsonFullPath)}':`, error.message);
-        }
-    }
-    console.log('Block attribute type generation complete.');
+					// Mark property as required if it has a default value or is the 'content' role
+					if (
+						Object.prototype.hasOwnProperty.call(
+							attr,
+							'default'
+						) ||
+						attr.role === 'content'
+					) {
+						rootAttributesSchema.required.push( key );
+					}
+				}
+			}
+
+			const compiledAttributes = await compile(
+				rootAttributesSchema,
+				attributesInterfaceName,
+				{
+					bannerComment:
+						'/* eslint-disable */\n/**\n * This file was automatically generated by json-schema-to-typescript.\n * DO NOT MODIFY IT BY HAND. Instead, modify your block.json and rerun the script.\n */',
+					// Add other JSTT options here for formatting, etc.
+				}
+			);
+			fs.writeFileSync(
+				attributesOutputTsPath,
+				compiledAttributes,
+				'utf8'
+			);
+			console.log(
+				`  Generated '${ path.relative(
+					process.cwd(),
+					attributesOutputTsPath
+				) }' for '${ path.relative(
+					process.cwd(),
+					blockJsonFullPath
+				) }'`
+			);
+		} catch ( error ) {
+			// Log error but continue processing other blocks
+			console.error(
+				`  Error processing '${ path.relative(
+					process.cwd(),
+					blockJsonFullPath
+				) }':`,
+				error.message
+			);
+		}
+	}
+	console.log( 'Block attribute type generation complete.' );
 }
 
-generateBlockAttributeTypes().catch(error => {
-    // Catch any unhandled errors outside the loop
-    console.error('Unhandled error during block attribute type generation:', error);
-    process.exit(1);
-});
+generateBlockAttributeTypes().catch( ( error ) => {
+	// Catch any unhandled errors outside the loop
+	console.error(
+		'Unhandled error during block attribute type generation:',
+		error
+	);
+	process.exit( 1 );
+} );

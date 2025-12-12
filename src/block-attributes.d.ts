@@ -5,8 +5,8 @@
  */
 
 export interface BlockAttributes {
-  lightThemeBgColor: string;
-  darkThemeBgColor: string;
-  lightThemeTextColor: string;
-  darkThemeTextColor: string;
+	lightThemeBgColor: string;
+	darkThemeBgColor: string;
+	lightThemeTextColor: string;
+	darkThemeTextColor: string;
 }

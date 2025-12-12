@@ -6,22 +6,27 @@
  */
 
 .wp-block-gutenberg-ts-utils-typed-attributes-demo {
+	// Default presets, overridden by block attributes.
+	--dark-theme-bg-color: #333;
+	--dark-theme-text-color: #fff;
+	--light-theme-bg-color: #fff;
+	--light-theme-text-color: #000;
 	font-size: 1em;
-	background: #ffff001a;
+	background: var(--light-theme-bg-color);
 	padding: 1em;
 
 	&.dark-theme {
-		background: #333;
-		color: #fff;
+		background: var(--dark-theme-bg-color);
+		color: var(--dark-theme-text-color);
 
 		button {
-			background: #555;
-			color: #fff;
+			background: var(--dark-theme-button-bg-color);
+			color: var(--dark-theme-button-text-color);
 			border: 1px solid #777;
 		}
 
 		p {
-			color: #ddd;
+			color: var(--dark-theme-text-color);
 		}
 	}
 }

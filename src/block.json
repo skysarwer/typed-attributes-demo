@@ -7,6 +7,24 @@
 	"category": "widgets",
 	"icon": "admin-tools",
 	"description": "A simple block demonstrating dynamically typed block attributes",
+	"attributes": {
+		"lightThemeBgColor": {
+			"type": "string",
+			"default": "#ffffff"
+		},
+		"darkThemeBgColor": {
+			"type": "string",
+			"default": "#000000"
+		},
+		"lightThemeTextColor": {
+			"type": "string",
+			"default": "#000000"
+		},
+		"darkThemeTextColor": {
+			"type": "string",
+			"default": "#ffffff"
+		}
+	},
 	"example": {},
 	"supports": {
 		"interactivity": true

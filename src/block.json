@@ -10,19 +10,19 @@
 	"attributes": {
 		"lightThemeBgColor": {
 			"type": "string",
-			"default": "#ffffff"
+			"default": "#fff"
 		},
 		"darkThemeBgColor": {
 			"type": "string",
-			"default": "#000000"
+			"default": "#333"
 		},
 		"lightThemeTextColor": {
 			"type": "string",
-			"default": "#000000"
+			"default": "#000"
 		},
 		"darkThemeTextColor": {
 			"type": "string",
-			"default": "#ffffff"
+			"default": "#fff"
 		}
 	},
 	"example": {},

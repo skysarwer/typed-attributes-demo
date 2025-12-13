@@ -6,8 +6,6 @@ Stable tag:        0.1.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-**CURRENTLY WORK IN PROGRESS**
-
 Demonstrates automated TypeScript interface generation for Gutenberg block attributes from block.json, enhancing type safety and developer experience.
 
 == Description ==

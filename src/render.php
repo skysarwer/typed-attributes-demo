@@ -31,6 +31,12 @@ wp_interactivity_state(
 	<?php echo wp_interactivity_data_wp_context( array( 'isOpen' => false ) ); ?>
 	data-wp-watch="callbacks.logIsOpen"
 	data-wp-class--dark-theme="state.isDark"
+	style="
+		--dark-theme-bg-color: <?php echo esc_attr($attributes['darkThemeBgColor'] ?? '#333'); ?>;
+		--dark-theme-text-color: <?php echo esc_attr($attributes['darkThemeTextColor'] ?? '#fff'); ?>;
+		--light-theme-bg-color: <?php echo esc_attr($attributes['lightThemeBgColor'] ?? '#fff'); ?>;
+		--light-theme-text-color: <?php echo esc_attr($attributes['lightThemeTextColor'] ?? '#000'); ?>;
+	"
 >
 	<button
 		data-wp-on--click="actions.toggleTheme"

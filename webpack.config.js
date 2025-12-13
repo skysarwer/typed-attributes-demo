@@ -6,6 +6,7 @@ const fs = require( 'fs' );
 
 /**
  * Webpack Plugin to trigger TypeScript interface generation for block attributes.
+ * Handles initial generation and watches `block.json` files for changes during development.
  */
 class GenerateTypesWebpackPlugin {
 	constructor( options = {} ) {
@@ -32,7 +33,6 @@ class GenerateTypesWebpackPlugin {
 			}
 		);
 
-		// In watch mode, regenerate types if any block.json files change
 		if ( compiler.options.mode === 'development' ) {
 			compiler.hooks.afterCompile.tap(
 				this.pluginName,
@@ -58,11 +58,11 @@ class GenerateTypesWebpackPlugin {
 						{ cwd: this.options.cwd, absolute: true }
 					);
 
-					if (
-						modifiedFiles.some( ( file ) =>
-							blockJsonSearchPaths.includes( file )
-						)
-					) {
+					const relevantChanges = modifiedFiles.filter( ( file ) =>
+						blockJsonSearchPaths.includes( file )
+					);
+
+					if ( relevantChanges.length > 0 ) {
 						await generateBlockAttributeTypes( this.options );
 					}
 					callback();
@@ -72,8 +72,7 @@ class GenerateTypesWebpackPlugin {
 	}
 }
 
-// Dynamically resolve entry points for single (src/index.ts) or multi-block (src/blocks/*/index.ts) structures.
-// This logic will also support blocks that have not yet migrated their main entry file to TypeScript (i.e., `index.js`).
+// Dynamically resolve entry points for single (src/index.ts/js) or multi-block (src/blocks/*/index.ts/js) structures.
 const customEntryPoints = {};
 const currentWorkingDir = process.cwd();
 
@@ -104,7 +103,6 @@ const findBlockEntry = ( basePath, blockGlob ) => {
 	);
 	jsFiles.forEach( ( file ) => {
 		const blockName = path.basename( path.dirname( file ) );
-		// Only add if a TS file wasn't already found for this block
 		if ( ! entryMap[ blockName ] ) {
 			entryMap[ blockName ] = file;
 		}
@@ -113,23 +111,28 @@ const findBlockEntry = ( basePath, blockGlob ) => {
 };
 
 // Populate customEntryPoints for single block (src/index.ts or src/index.js)
-Object.assign( customEntryPoints, findBlockEntry( 'src', '' ) ); // BlockGlob is empty for src/index.ts/js directly
+Object.assign( customEntryPoints, findBlockEntry( 'src', '' ) );
 
 // Populate customEntryPoints for multi-block (src/blocks/*/index.ts or src/blocks/*/index.js)
 Object.assign( customEntryPoints, findBlockEntry( 'src/blocks', '*' ) );
 
+// Ensure defaultConfig is an array for mapping, if not already.
+const configs = Array.isArray( defaultConfig )
+	? defaultConfig
+	: [ defaultConfig ];
+
+// Export the array of modified configurations.
 module.exports = configs.map( ( config, index ) => {
-	// Detect if this is the experimental module build (Interactivity API, etc.)
-	// These builds typically have experiments.outputModule = true
+	// Detect if this is the experimental module build.
 	const isModuleBuild = config.experiments && config.experiments.outputModule;
 
-	// Add type generation only to the FIRST config to prevent double-running
+	// Add type generation only to the FIRST config.
 	const plugins = [ ...( config.plugins || [] ) ];
 	if ( index === 0 ) {
 		plugins.push( new GenerateTypesWebpackPlugin() );
 	}
 
-	// Apply .ts/.tsx extension resolution to ALL builds (modules might use TS too)
+	// Apply .ts/.tsx extension resolution to ALL builds.
 	const resolve = {
 		...config.resolve,
 		extensions: [
@@ -141,8 +144,7 @@ module.exports = configs.map( ( config, index ) => {
 		],
 	};
 
-	// Only inject standard editor entry points (registerBlockType) into the STANDARD build.
-	// Do not inject them into the module build.
+	// Apply editor entry points only into the standard build.
 	let entry = { ...config.entry };
 	if ( ! isModuleBuild ) {
 		entry = { ...entry, ...customEntryPoints };

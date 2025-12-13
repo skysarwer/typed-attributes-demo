@@ -23,14 +23,14 @@ async function generateBlockAttributeTypes( options = {} ) {
 
 	// Use filesToProcess if provided, otherwise glob
 	let blockJsonFiles = options.filesToProcess;
-    
-    if ( ! blockJsonFiles || blockJsonFiles.length === 0 ) {
+
+	if ( ! blockJsonFiles || blockJsonFiles.length === 0 ) {
 		// Fallback to glob only if no specific files are provided (e.g., direct script run)
 		blockJsonFiles = glob.sync( searchPattern, {
 			cwd: cwd,
 			absolute: true, // IMPORTANT: Ensure these are absolute paths
 		} );
-    }
+	}
 
 	if ( blockJsonFiles.length === 0 ) {
 		console.warn(

@@ -37,11 +37,14 @@ class GenerateTypesWebpackPlugin {
 
 					// Populate Cache
 					foundFiles.forEach( ( f ) =>
-						this.knownBlockFiles.add( path.resolve(f) )
+						this.knownBlockFiles.add( path.resolve( f ) )
 					);
 
 					// Run the generator
-					await generateBlockAttributeTypes( { ...this.options, filesToProcess: Array.from(this.knownBlockFiles) } );
+					await generateBlockAttributeTypes( {
+						...this.options,
+						filesToProcess: Array.from( this.knownBlockFiles ),
+					} );
 					this.initialRun = false;
 				}
 				callback();
@@ -65,26 +68,41 @@ class GenerateTypesWebpackPlugin {
 
 				for ( const filePath of modifiedFiles ) {
 					// Case A: Is this a known block.json file that changed?
-					if ( this.knownBlockFiles.has( path.resolve(filePath) ) ) {
-						filesToRegenerate.add( path.resolve(filePath) );
+					if (
+						this.knownBlockFiles.has( path.resolve( filePath ) )
+					) {
+						filesToRegenerate.add( path.resolve( filePath ) );
 					}
 
 					// Case B: Is this a NEW block.json file?
 					// (Matches the extension and isn't in our cache yet)
 					if (
 						filePath.endsWith( 'block.json' ) &&
-						! this.knownBlockFiles.has( path.resolve(filePath) ) &&
-                        path.relative(this.options.cwd, filePath).startsWith(path.dirname(this.options.searchPattern.replace(/\*\*\//g, '').replace('**', ''))) // Basic check if it's within expected 'src' folder etc.
+						! this.knownBlockFiles.has(
+							path.resolve( filePath )
+						) &&
+						path
+							.relative( this.options.cwd, filePath )
+							.startsWith(
+								path.dirname(
+									this.options.searchPattern
+										.replace( /\*\*\//g, '' )
+										.replace( '**', '' )
+								)
+							) // Basic check if it's within expected 'src' folder etc.
 					) {
 						// It's likely a new block. Add to cache and run.
-						this.knownBlockFiles.add( path.resolve(filePath) );
-						filesToRegenerate.add( path.resolve(filePath) );
+						this.knownBlockFiles.add( path.resolve( filePath ) );
+						filesToRegenerate.add( path.resolve( filePath ) );
 					}
 				}
 
 				if ( filesToRegenerate.size > 0 ) {
 					// Run the generator only for the files that actually changed
-					await generateBlockAttributeTypes( { ...this.options, filesToProcess: Array.from(filesToRegenerate) } );
+					await generateBlockAttributeTypes( {
+						...this.options,
+						filesToProcess: Array.from( filesToRegenerate ),
+					} );
 				}
 				callback();
 			}

@@ -27,9 +27,6 @@ interface RawBlockAttributeDefinition {
 	// (e.g., 'content', 'local', etc..)
 	role?: string;
 	enum?: any[];
-	// Complex types for nested attributes
-	items?: RawBlockAttributeDefinition | RawBlockAttributeDefinition[]; // For array types
-	properties?: Record< string, RawBlockAttributeDefinition >; // For object types
 	query?: Record< string, RawBlockAttributeDefinition >; // For source: "query" (repeating DOM elements)
 	// For source: "children"
 	children?: true;

@@ -83,34 +83,40 @@ const currentWorkingDir = process.cwd();
  * @param {string} blockGlob - The glob pattern for the block directory (e.g., 'index', '*').
  * @returns {Record<string, string>} A map of entry point names to their absolute paths.
  */
-const findBlockEntry = (basePath, blockGlob) => {
-    const entryMap = {};
-    const absoluteBasePath = path.resolve(currentWorkingDir, basePath);
+const findBlockEntry = ( basePath, blockGlob ) => {
+	const entryMap = {};
+	const absoluteBasePath = path.resolve( currentWorkingDir, basePath );
 
-    // Look for TypeScript entry files first
-    const tsFiles = glob.sync(`${absoluteBasePath}/${blockGlob}/index.ts`, { cwd: currentWorkingDir, absolute: true });
-    tsFiles.forEach(file => {
-        const blockName = path.basename(path.dirname(file));
-        entryMap[blockName] = file;
-    });
+	// Look for TypeScript entry files first
+	const tsFiles = glob.sync(
+		`${ absoluteBasePath }/${ blockGlob }/index.ts`,
+		{ cwd: currentWorkingDir, absolute: true }
+	);
+	tsFiles.forEach( ( file ) => {
+		const blockName = path.basename( path.dirname( file ) );
+		entryMap[ blockName ] = file;
+	} );
 
-    // For any blocks not found in TS, look for JavaScript entry files
-    const jsFiles = glob.sync(`${absoluteBasePath}/${blockGlob}/index.js`, { cwd: currentWorkingDir, absolute: true });
-    jsFiles.forEach(file => {
-        const blockName = path.basename(path.dirname(file));
-        // Only add if a TS file wasn't already found for this block
-        if (!entryMap[blockName]) {
-            entryMap[blockName] = file;
-        }
-    });
-    return entryMap;
+	// For any blocks not found in TS, look for JavaScript entry files
+	const jsFiles = glob.sync(
+		`${ absoluteBasePath }/${ blockGlob }/index.js`,
+		{ cwd: currentWorkingDir, absolute: true }
+	);
+	jsFiles.forEach( ( file ) => {
+		const blockName = path.basename( path.dirname( file ) );
+		// Only add if a TS file wasn't already found for this block
+		if ( ! entryMap[ blockName ] ) {
+			entryMap[ blockName ] = file;
+		}
+	} );
+	return entryMap;
 };
 
 // Populate customEntryPoints for single block (src/index.ts or src/index.js)
-Object.assign(customEntryPoints, findBlockEntry('src', '')); // BlockGlob is empty for src/index.ts/js directly
+Object.assign( customEntryPoints, findBlockEntry( 'src', '' ) ); // BlockGlob is empty for src/index.ts/js directly
 
 // Populate customEntryPoints for multi-block (src/blocks/*/index.ts or src/blocks/*/index.js)
-Object.assign(customEntryPoints, findBlockEntry('src/blocks', '*'));
+Object.assign( customEntryPoints, findBlockEntry( 'src/blocks', '*' ) );
 
 module.exports = configs.map( ( config, index ) => {
 	// Detect if this is the experimental module build (Interactivity API, etc.)

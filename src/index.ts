@@ -63,15 +63,18 @@ registerBlockType< BlockAttributesValues >(
 		/**
 		 * Explicitly cast attributes. `BlockJSONMetadata` uses `RawBlockAttributeDefinition` for loose JSON parsing,
 		 * but `BlockConfiguration` requires the stricter `BlockAttribute<unknown>` types (with string literal 'type' values).
-		 * This cast bridges that difference. 
+		 * This cast bridges that difference.
 		 */
-		attributes: metadata.attributes as Record< string, BlockAttribute <unknown> >,
+		attributes: metadata.attributes as Record<
+			string,
+			BlockAttribute< unknown >
+		>,
 
 		/**
 		 * The `edit` component for the block.
 		 * @see ./edit.tsx (or .ts)
 		 */
-		edit: Edit as React.FC<BlockEditProps< BlockAttributesValues >>, // Explicitly type the Edit component
+		edit: Edit as React.FC< BlockEditProps< BlockAttributesValues > >, // Explicitly type the Edit component
 
 		/**
 		 * The `save` component for the block.

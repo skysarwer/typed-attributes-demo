@@ -11,14 +11,18 @@ import { __ } from '@wordpress/i18n';
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
-import { useBlockProps, InspectorControls, ColorPalette } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	InspectorControls,
+	ColorPalette,
+} from '@wordpress/block-editor';
 
 import { useState } from '@wordpress/element';
 
 /**
  * Import our dynamically generated BlockAttributes type.
  */
-import { BlockAttributes } from './block-attributes'
+import { BlockAttributes } from './block-attributes';
 
 /**
  * The edit function describes the structure of your block in the context of the
@@ -44,10 +48,12 @@ const Edit: React.FC< EditProps > = ( { attributes, setAttributes } ) => {
 	const darkThemeBgColor = attributes.darkThemeBgColor;
 	const darkThemeTextColor = attributes.darkThemeTextColor;
 
-	const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
-	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [ currentTheme, setCurrentTheme ] = useState< 'light' | 'dark' >(
+		'light'
+	);
+	const [ isOpen, setIsOpen ] = useState< boolean >( false );
 
-	const blockProps = useBlockProps({
+	const blockProps = useBlockProps( {
 		className: currentTheme === 'dark' ? 'dark-theme' : 'light-theme',
 		style: {
 			'--light-theme-bg-color': lightThemeBgColor,
@@ -55,59 +61,82 @@ const Edit: React.FC< EditProps > = ( { attributes, setAttributes } ) => {
 			'--dark-theme-bg-color': darkThemeBgColor,
 			'--dark-theme-text-color': darkThemeTextColor,
 		} as React.CSSProperties,
-	});
+	} );
 
-	const themeText = currentTheme === 'dark'
-		? __('Switch to Light', 'typed-attributes-demo')
-		: __('Switch to Dark', 'typed-attributes-demo');
+	const themeText =
+		currentTheme === 'dark'
+			? __( 'Switch to Light', 'typed-attributes-demo' )
+			: __( 'Switch to Dark', 'typed-attributes-demo' );
 
 	return (
 		<>
 			<InspectorControls>
-				<div style={{ padding: '1em 0' }}>
+				<div style={ { padding: '1em 0' } }>
 					<strong>Background Color</strong>
 					<ColorPalette
-						value={lightThemeBgColor}
-						onChange={(newColor) => setAttributes({ lightThemeBgColor: newColor })}
+						value={ lightThemeBgColor }
+						onChange={ ( newColor ) =>
+							setAttributes( { lightThemeBgColor: newColor } )
+						}
 					/>
 					<ColorPalette
-						value={darkThemeBgColor}
-						onChange={(newColor) => setAttributes({ darkThemeBgColor: newColor })}
+						value={ darkThemeBgColor }
+						onChange={ ( newColor ) =>
+							setAttributes( { darkThemeBgColor: newColor } )
+						}
 					/>
 					<ColorPalette
-						value={lightThemeTextColor}
-						onChange={(newColor) => setAttributes({ lightThemeTextColor: newColor })}
+						value={ lightThemeTextColor }
+						onChange={ ( newColor ) =>
+							setAttributes( { lightThemeTextColor: newColor } )
+						}
 					/>
 					<ColorPalette
-						value={darkThemeTextColor}
-						onChange={(newColor) => setAttributes({ darkThemeTextColor: newColor })}
+						value={ darkThemeTextColor }
+						onChange={ ( newColor ) =>
+							setAttributes( { darkThemeTextColor: newColor } )
+						}
 					/>
 				</div>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<button
 					type="button"
-					onClick={() => setCurrentTheme(currentTheme === 'dark' ? 'light' : 'dark')}
+					onClick={ () =>
+						setCurrentTheme(
+							currentTheme === 'dark' ? 'light' : 'dark'
+						)
+					}
 				>
-					{themeText}
+					{ themeText }
 				</button>
 				<button
 					type="button"
-					onClick={() => setIsOpen((open) => !open)}
-					aria-expanded={isOpen}
+					onClick={ () => setIsOpen( ( open ) => ! open ) }
+					aria-expanded={ isOpen }
 					aria-controls="typed-attributes-demo-paragraph"
 				>
-					{__('Toggle', 'typed-attributes-demo')}
+					{ __( 'Toggle', 'typed-attributes-demo' ) }
 				</button>
 				<p
 					id="typed-attributes-demo-paragraph"
-					hidden={!isOpen}
-					style={currentTheme === 'dark'
-						? { backgroundColor: darkThemeBgColor, color: darkThemeTextColor }
-						: { backgroundColor: lightThemeBgColor, color: lightThemeTextColor }
+					hidden={ ! isOpen }
+					style={
+						currentTheme === 'dark'
+							? {
+									backgroundColor: darkThemeBgColor,
+									color: darkThemeTextColor,
+							  }
+							: {
+									backgroundColor: lightThemeBgColor,
+									color: lightThemeTextColor,
+							  }
 					}
 				>
-					{__('Typed Attributes Demo - hello from an interactive block!', 'typed-attributes-demo')}
+					{ __(
+						'Typed Attributes Demo - hello from an interactive block!',
+						'typed-attributes-demo'
+					) }
 				</p>
 			</div>
 		</>

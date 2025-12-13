@@ -7,6 +7,7 @@ import {
 	registerBlockType,
 	BlockConfiguration,
 	BlockAttribute,
+	BlockEditProps,
 } from '@wordpress/blocks';
 
 /**
@@ -33,15 +34,20 @@ import metadataJson from './block.json';
 import { BlockJSONMetadata } from './types/block-metadata';
 
 /**
+ * Import the BlockAttributes type that is dynamically generated from block.json.
+ */
+import { BlockAttributes } from './block-attributes';
+import React from 'react';
+
+/**
  * Asserts the type of the imported `block.json` data.
  */
 const metadata: BlockJSONMetadata = metadataJson;
 
 /**
- * Defines the generic type for the actual attribute *values* passed to block components.
- * For now, `Record<string, any>`. Will eventually use generated `BlockAttributes`.
+ * Define the type for the block's attributes based on the dynamically generated BlockAttributes type.
  */
-type BlockAttributesValues = Record< string, any >; // Using `any` for simplicity in `index.ts`, `unknown` is also valid
+type BlockAttributesValues = BlockAttributes;
 
 /**
  * Every block starts by registering a new block type definition.
@@ -55,10 +61,17 @@ registerBlockType< BlockAttributesValues >(
 		...metadata,
 
 		/**
+		 * Explicitly cast attributes. `BlockJSONMetadata` uses `RawBlockAttributeDefinition` for loose JSON parsing,
+		 * but `BlockConfiguration` requires the stricter `BlockAttribute<unknown>` types (with string literal 'type' values).
+		 * This cast bridges that difference. 
+		 */
+		attributes: metadata.attributes as Record< string, BlockAttribute <unknown> >,
+
+		/**
 		 * The `edit` component for the block.
 		 * @see ./edit.tsx (or .ts)
 		 */
-		edit: Edit,
+		edit: Edit as React.FC<BlockEditProps< BlockAttributesValues >>, // Explicitly type the Edit component
 
 		/**
 		 * The `save` component for the block.

@@ -2,11 +2,10 @@ const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 const generateBlockAttributeTypes = require( './generate-block-attribute-types' );
 const path = require( 'path' );
 const glob = require( 'glob' );
-const fs = require( 'fs' );
 
 /**
  * Webpack Plugin to trigger TypeScript interface generation for block attributes.
- * Handles initial generation and watches `block.json` files for changes during development.
+ * Handles initial generation and smart watching for block.json changes.
  */
 class GenerateTypesWebpackPlugin {
 	constructor( options = {} ) {
@@ -17,15 +16,31 @@ class GenerateTypesWebpackPlugin {
 		};
 		this.pluginName = 'GenerateTypesWebpackPlugin';
 		this.initialRun = true;
+
+		// CACHE: A Set to store the absolute paths of known block.json files.
+		this.knownBlockFiles = new Set();
 	}
 
 	apply( compiler ) {
 		this.options.cwd = compiler.context;
 
+		// Initial Compilation: Scan once, populate cache, generate types.
 		compiler.hooks.beforeCompile.tapAsync(
 			this.pluginName,
 			async ( params, callback ) => {
 				if ( this.initialRun ) {
+					// Perform the initial scan
+					const foundFiles = glob.sync( this.options.searchPattern, {
+						cwd: this.options.cwd,
+						absolute: true,
+					} );
+
+					// Populate Cache
+					foundFiles.forEach( ( f ) =>
+						this.knownBlockFiles.add( f )
+					);
+
+					// Run the generator
 					await generateBlockAttributeTypes( this.options );
 					this.initialRun = false;
 				}
@@ -33,39 +48,57 @@ class GenerateTypesWebpackPlugin {
 			}
 		);
 
+		// Watch Mode Optimization: Check only changed files against our cache.
+		compiler.hooks.watchRun.tapAsync(
+			this.pluginName,
+			async ( compiler, callback ) => {
+				// Get the Set of changed files from Webpack
+				const modifiedFiles = compiler.modifiedFiles;
+
+				if ( ! modifiedFiles ) {
+					return callback();
+				}
+
+				let shouldRun = false;
+
+				for ( const filePath of modifiedFiles ) {
+					// Case A: Is this a known block.json file that changed?
+					if ( this.knownBlockFiles.has( filePath ) ) {
+						shouldRun = true;
+						break;
+					}
+
+					// Case B: Is this a NEW block.json file?
+					// (Matches the extension and isn't in our cache yet)
+					if (
+						filePath.endsWith( 'block.json' ) &&
+						! this.knownBlockFiles.has( filePath )
+					) {
+						// It's likely a new block. Add to cache and run.
+						this.knownBlockFiles.add( filePath );
+						shouldRun = true;
+						break;
+					}
+				}
+
+				if ( shouldRun ) {
+					// We only re-run if a block.json actually changed.
+					// This saves us from running IO operations on CSS/JS changes.
+					await generateBlockAttributeTypes( this.options );
+				}
+				callback();
+			}
+		);
+
+		// Dependency Tracking: Ensure Webpack watches these files
 		if ( compiler.options.mode === 'development' ) {
 			compiler.hooks.afterCompile.tap(
 				this.pluginName,
 				( compilation ) => {
-					const blockJsonFiles = glob.sync(
-						this.options.searchPattern,
-						{ cwd: this.options.cwd, absolute: true }
-					);
-					blockJsonFiles.forEach( ( file ) => {
+					// Use our cached list of block.json files
+					this.knownBlockFiles.forEach( ( file ) => {
 						compilation.fileDependencies.add( file );
 					} );
-				}
-			);
-
-			compiler.hooks.watchRun.tapAsync(
-				this.pluginName,
-				async ( compiler, callback ) => {
-					const modifiedFiles = Array.from(
-						compiler.modifiedFiles || []
-					);
-					const blockJsonSearchPaths = glob.sync(
-						this.options.searchPattern,
-						{ cwd: this.options.cwd, absolute: true }
-					);
-
-					const relevantChanges = modifiedFiles.filter( ( file ) =>
-						blockJsonSearchPaths.includes( file )
-					);
-
-					if ( relevantChanges.length > 0 ) {
-						await generateBlockAttributeTypes( this.options );
-					}
-					callback();
 				}
 			);
 		}

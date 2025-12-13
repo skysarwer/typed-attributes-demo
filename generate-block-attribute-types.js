@@ -10,6 +10,7 @@ const glob = require( 'glob' );
  * @param {object} [options={}] - Configuration options.
  * @param {string} [options.cwd=process.cwd()] - The current working directory for file searches.
  * @param {string} [options.searchPattern] - Glob pattern to find block.json files.
+ * @param {string[]} [options.filesToProcess] - Optional array of absolute paths to block.json files to process.
  */
 async function generateBlockAttributeTypes( options = {} ) {
 	// Determine the current working directory from options or Node.js process.
@@ -20,11 +21,16 @@ async function generateBlockAttributeTypes( options = {} ) {
 	// The interface name for generated block attributes, kept consistent across all blocks.
 	const attributesInterfaceName = 'BlockAttributes';
 
-	// Use glob to find all matching 'block.json' files synchronously based on the defined pattern.
-	const blockJsonFiles = glob.sync( searchPattern, {
-		cwd: cwd,
-		absolute: false, // Get paths relative to cwd first
-	} );
+	// Use filesToProcess if provided, otherwise glob
+	let blockJsonFiles = options.filesToProcess;
+    
+    if ( ! blockJsonFiles || blockJsonFiles.length === 0 ) {
+		// Fallback to glob only if no specific files are provided (e.g., direct script run)
+		blockJsonFiles = glob.sync( searchPattern, {
+			cwd: cwd,
+			absolute: true, // IMPORTANT: Ensure these are absolute paths
+		} );
+    }
 
 	if ( blockJsonFiles.length === 0 ) {
 		console.warn(

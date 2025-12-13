@@ -41,7 +41,7 @@ class GenerateTypesWebpackPlugin {
 					);
 
 					// Run the generator
-					await generateBlockAttributeTypes( this.options );
+					await generateBlockAttributeTypes( { ...this.options, filesToProcess: Array.from(this.knownBlockFiles) } );
 					this.initialRun = false;
 				}
 				callback();
@@ -55,36 +55,36 @@ class GenerateTypesWebpackPlugin {
 				// Get the Set of changed files from Webpack
 				const modifiedFiles = compiler.modifiedFiles;
 
-				if ( ! modifiedFiles ) {
+				if ( ! modifiedFiles || modifiedFiles.size === 0 ) {
 					return callback();
 				}
+
+				const filesToRegenerate = new Set();
 
 				let shouldRun = false;
 
 				for ( const filePath of modifiedFiles ) {
 					// Case A: Is this a known block.json file that changed?
 					if ( this.knownBlockFiles.has( filePath ) ) {
-						shouldRun = true;
-						break;
+						filesToRegenerate.add( filePath );
 					}
 
 					// Case B: Is this a NEW block.json file?
 					// (Matches the extension and isn't in our cache yet)
 					if (
 						filePath.endsWith( 'block.json' ) &&
-						! this.knownBlockFiles.has( filePath )
+						! this.knownBlockFiles.has( filePath ) &&
+                        path.relative(this.options.cwd, filePath).startsWith(path.dirname(this.options.searchPattern.replace(/\*\*\//g, '').replace('**', ''))) // Basic check if it's within expected 'src' folder etc.
 					) {
 						// It's likely a new block. Add to cache and run.
 						this.knownBlockFiles.add( filePath );
-						shouldRun = true;
-						break;
+						filesToRegenerate.add( filePath );
 					}
 				}
 
-				if ( shouldRun ) {
-					// We only re-run if a block.json actually changed.
-					// This saves us from running IO operations on CSS/JS changes.
-					await generateBlockAttributeTypes( this.options );
+				if ( filesToRegenerate.size > 0 ) {
+					// Run the generator only for the files that actually changed
+					await generateBlockAttributeTypes( { ...this.options, filesToProcess: Array.from(filesToRegenerate) } );
 				}
 				callback();
 			}

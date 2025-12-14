@@ -11,7 +11,7 @@
  * Text Domain:       typed-attributes-demo
  * Domain Path:       gtsu
  *
- * @package           gutenberg-ts-utils
+ * @package           typed-attributes-demo
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

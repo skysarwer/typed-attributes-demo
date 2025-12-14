@@ -15,7 +15,7 @@ $unique_id = wp_unique_id( 'p-' );
 
 // Adds the global state.
 wp_interactivity_state(
-	'gutenberg-ts-utils',
+	'typed-attributes-demo',
 	array(
 		'isDark'    => false,
 		'darkText'  => esc_html__( 'Switch to Light', 'typed-attributes-demo' ),
@@ -27,7 +27,7 @@ wp_interactivity_state(
 
 <div
 	<?php echo get_block_wrapper_attributes(); ?>
-	data-wp-interactive="gutenberg-ts-utils"
+	data-wp-interactive="typed-attributes-demo"
 	<?php echo wp_interactivity_data_wp_context( array( 'isOpen' => false ) ); ?>
 	data-wp-watch="callbacks.logIsOpen"
 	data-wp-class--dark-theme="state.isDark"

@@ -1,5 +1,5 @@
 const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
-const generateBlockAttributeTypes = require( './generate-block-attribute-types' );
+const generateBlockAttributeTypes = require( './scripts/generate-block-attribute-types' );
 const path = require( 'path' );
 const glob = require( 'glob' );
 

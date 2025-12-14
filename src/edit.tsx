@@ -134,7 +134,7 @@ const Edit: React.FC< EditProps > = ( { attributes, setAttributes } ) => {
 					}
 				>
 					{ __(
-						'Typed Attributes Demo - hello from an interactive block!',
+						'Interactive Theme Switcher - hello from an interactive block!',
 						'typed-attributes-demo'
 					) }
 				</p>

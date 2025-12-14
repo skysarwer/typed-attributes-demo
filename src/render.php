@@ -56,7 +56,7 @@ wp_interactivity_state(
 		data-wp-bind--hidden="!context.isOpen"
 	>
 		<?php
-			esc_html_e( 'Typed Attributes Demo - hello from an interactive block!', 'typed-attributes-demo' );
+			esc_html_e( 'Interactive Theme Switcher - hello from an interactive block!', 'typed-attributes-demo' );
 		?>
 	</p>
 </div>

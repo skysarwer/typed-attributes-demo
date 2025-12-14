@@ -1,12 +1,12 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "gutenberg-ts-utils/typed-attributes-demo",
+	"name": "gutenberg-ts-utils/typed-interactive-block",
 	"version": "0.1.0",
-	"title": "Typed Attributes Demo",
+	"title": "Interactive Theme Switcher",
 	"category": "widgets",
 	"icon": "admin-tools",
-	"description": "A simple block demonstrating dynamically typed block attributes",
+	"description": "Switches between light and dark themes using attributes and the Interactivity API, demonstrating automated type generation.",
 	"attributes": {
 		"lightThemeBgColor": {
 			"type": "string",

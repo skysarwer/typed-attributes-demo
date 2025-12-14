@@ -1,10 +1,10 @@
 # Gutenberg Typed Attributes Demo
 
-**Contributors:** Evan Buckiewicz
-**Tags:** gutenberg, block, typescript, developer-tools, type-safety, build-process, json-schema, dx
-**Tested up to:** 6.7
-**Stable tag:** 0.1.0
-**License:** GPL-2.0-or-later
+**Contributors:** Evan Buckiewicz<br/>
+**Tags:** gutenberg, block, typescript, developer-tools, type-safety, build-process, json-schema, dx<br/>
+**Tested up to:** 6.7<br/>
+**Stable tag:** 0.1.0<br/>
+**License:** GPL-2.0-or-later<br/>
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 
 ---

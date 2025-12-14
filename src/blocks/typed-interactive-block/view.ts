@@ -41,4 +41,4 @@ const storeDef = {
 
 type Store = ServerState & typeof storeDef;
 
-const { state } = store< Store >( 'gutenberg-ts-utils', storeDef );
+const { state } = store< Store >( 'typed-attributes-demo', storeDef );

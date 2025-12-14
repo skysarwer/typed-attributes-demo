@@ -31,7 +31,7 @@ import metadataJson from './block.json';
  * BlockJSONMetadata is imported from a central, shared location.
  * This allows for a single source of truth for the block.json structure across all blocks.
  */
-import { BlockJSONMetadata } from './types/block-metadata';
+import { BlockJSONMetadata } from '../../types/block-metadata';
 
 /**
  * Import the BlockAttributes type that is dynamically generated from block.json.

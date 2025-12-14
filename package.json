@@ -27,6 +27,7 @@
 		"@types/wordpress__block-editor": "^14.21.2",
 		"@types/wordpress__i18n": "^3.11.0",
 		"@wordpress/block-editor": "^15.9.0",
+		"@wordpress/prettier-config": "^4.36.0",
 		"@wordpress/scripts": "^31.1.0",
 		"glob": "^13.0.0",
 		"json-schema-to-typescript": "^15.0.4"
